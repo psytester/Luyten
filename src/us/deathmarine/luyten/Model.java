@@ -87,7 +87,7 @@ public class Model extends JSplitPane {
 	private static final long serialVersionUID = 6896857630400910200L;
 
 	private static final long MAX_JAR_FILE_SIZE_BYTES = 10_000_000_000L;
-	private static final long MAX_UNPACKED_FILE_SIZE_BYTES = 10_000_000L;
+	private static final long MAX_UNPACKED_FILE_SIZE_BYTES = 200_000_000L;	// for large WAR files or JAR files like seen with spring-boot
 
 	private static LuytenTypeLoader typeLoader = new LuytenTypeLoader();
 	public static MetadataSystem metadataSystem = new MetadataSystem(typeLoader);
@@ -357,7 +357,7 @@ public class Model extends JSplitPane {
 						// A JAR file within a WAR file is selected
 						if (luytenPrefs.isFollowEmbeddedJarFile()) {
 							//Jetzt die tempFileLocation einlesen und alle JAR Dateien holen
-							if (file.getName().endsWith(".war")) {	// initial loaded file is a WAR file
+							if (file.getName().endsWith(".war") || file.getName().endsWith(".jar")) {	// initial loaded file is a WAR file or JAR file (e.g. Spring-Boot)
 								getLabel().setText("Extract embedded JAR file " + entryName + " from " + tempFileLocation + " ...");
 								try (Stream<Path> paths = Files.walk(tempFileLocation)) {
 							        paths.filter(Files::isRegularFile)
@@ -726,11 +726,12 @@ public class Model extends JSplitPane {
 					
 					/* 
 					 * Known limitations of processing WAR files
-					 * + The WAR file is unzipped into temp folder directory, this takes some time on bigger files 
+					 * + The WAR file is unzipped into temp folder directory, this takes some time on bigger files
+					 * + Spring-Boot JAR files contains embedded JAR files, too
 					 * + There is no DeleteOnExit of that temp folder directory. Do this manually by now!
 					 * + All embedded JAR files needs to be unzipped and a final ZIP file is create, this takes some times due to file system I/O
 					 */
-					if (file.getName().endsWith(".war")) {
+					if (file.getName().endsWith(".war") || file.getName().endsWith(".jar")) {
 						tempFileLocation = Files.createTempDirectory("luyten_", new FileAttribute<?>[0]);
 						getLabel().setText("Unpacking file to temp " + tempFileLocation.getFileName() + " ...");
 						Unzip unzipper = new Unzip();
@@ -740,7 +741,7 @@ public class Model extends JSplitPane {
 						unzipper.execute();
 						
 						if (luytenPrefs.isPrepareWarFile()) {
-							if (file.getName().endsWith(".war")) {
+							if (file.getName().endsWith(".war") || file.getName().endsWith(".jar")) {
 								//Jetzt die tempFileLocation einlesen und alle JAR Dateien direkt entpacken
 									getLabel().setText("Processing embedded JAR files ...");
 									final List<Path> embeddedPackageFiles = new ArrayList<>();
