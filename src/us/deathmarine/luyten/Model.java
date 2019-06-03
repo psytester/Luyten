@@ -408,8 +408,14 @@ public class Model extends JSplitPane {
 		} catch (TooLargeFileException e) {
 			getLabel().setText("File is too large: " + name + " - size: " + e.getReadableFileSize());
 		} catch (Exception e) {
-			getLabel().setText("Cannot open: " + name);
-			Luyten.showExceptionDialog("Unable to open file!", e);
+			if (e.getMessage().toString().contains("Invalid BootstrapMethods attribute entry: 2 additional arguments required for method java/lang/invoke/StringConcatFactory.makeConcatWithConstants, but only 1 specified.")) {
+				// Known issue of Procyon <= 0.5.35 and fix not yet released, refer to https://bitbucket.org/mstrobel/procyon/issues/336/
+				getLabel().setText("Cannot open: " + name + " due to known issue #336 in Procyon <= 0.5.35");
+				Luyten.showExceptionDialog("Unable to open file " + name + " due to known issue #336 in Procyon <= 0.5.35!", e);
+			} else {
+				getLabel().setText("Cannot open: " + name);
+				Luyten.showExceptionDialog("Unable to open file!", e);
+			}
 		} finally {
 			bar.setVisible(false);
 		}
